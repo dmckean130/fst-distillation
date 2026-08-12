@@ -35,6 +35,8 @@ def main():
         required=True,
     )
     parser.add_argument("--wandb-dir")
+    parser.add_argument("--max-neural-runs", type=int, default=None)
+    parser.add_argument("--max-extract-runs", type=int, default=None)
     args = parser.parse_args()
     paths = create_paths_from_args(args)
     paths_strs = {k: str(v) if isinstance(v, Path) else v for k, v in paths.items()}
@@ -64,8 +66,13 @@ def main():
         num_neural_runs = 25
         num_extract_runs = 25
     else:
-        num_neural_runs = 2
-        num_extract_runs = 2
+        num_neural_runs = 50
+        num_extract_runs = 100
+
+    if args.max_neural_runs:
+        num_neural_runs = min(num_neural_runs, args.max_neural_runs)
+    if args.max_extract_runs:
+        num_extract_runs = min(num_extract_runs, args.max_extract_runs)
 
     # =========================================
     # 2. ALIGNMENT PREDICTOR TRAINING
@@ -258,6 +265,7 @@ def main():
             remaining_runs = num_neural_runs - len(
                 [r for r in existing_sweep.runs if r.state == "finished"]
             )
+            remaining_runs = max(0, remaining_runs)
         wandb.agent(sweep_id, function=single_run_train_rnn, count=remaining_runs)
         sweep = wandb.Api().sweep(f"dmckean130-university-of-colorado-boulder/{rnn_project_name}/sweeps/{sweep_id.split(chr(47))[-1]}")
         best_run = sweep.best_run()
@@ -416,6 +424,7 @@ def main():
         remaining_runs = num_extract_runs - len(
             [r for r in existing_sweep.runs if r.state == "finished"]
         )
+        remaining_runs = max(0, remaining_runs)
 
     wandb.agent(fst_sweep_id, function=_run_extraction, count=remaining_runs)
     sweep = wandb.Api().sweep(
