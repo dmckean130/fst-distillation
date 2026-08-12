@@ -64,8 +64,8 @@ def main():
         num_neural_runs = 25
         num_extract_runs = 25
     else:
-        num_neural_runs = 50
-        num_extract_runs = 100
+        num_neural_runs = 2
+        num_extract_runs = 2
 
     # =========================================
     # 2. ALIGNMENT PREDICTOR TRAINING
@@ -80,7 +80,7 @@ def main():
                 wandb.Api()
                 .project(
                     name="fst-distillation.alignment_prediction.v2",
-                    entity="lecs-general",
+                    entity="dmckean130-university-of-colorado-boulder",
                 )
                 .sweeps()
             ):
@@ -98,7 +98,7 @@ def main():
 
             def single_run_train_alignment():
                 with wandb.init(
-                    entity="lecs-general",
+                    entity="dmckean130-university-of-colorado-boulder",
                     project="fst-distillation.alignment_prediction.v2",
                     dir=args.wandb_dir,
                 ) as run:
@@ -142,14 +142,14 @@ def main():
             }
             sweep_id = wandb.sweep(
                 sweep=sweep_configuration,
-                entity="lecs-general",
+                entity="dmckean130-university-of-colorado-boulder",
                 project="fst-distillation.alignment_prediction.v2",
             )
             wandb.agent(
                 sweep_id, function=single_run_train_alignment, count=num_neural_runs
             )
             sweep = wandb.Api().sweep(
-                f"lecs-general/fst-distillation.alignment_prediction.v2/sweeps/{sweep_id}"
+                f"dmckean130-university-of-colorado-boulder/fst-distillation.alignment_prediction.v2/sweeps/{sweep_id}"
             )
             best_run = sweep.best_run()
             predict_full_domain(paths, best_run.name, best_run.config["batch_size"])
@@ -172,7 +172,7 @@ def main():
     existing_sweep = None
     try:
         for sweep in (
-            wandb.Api().project(name=rnn_project_name, entity="lecs-general").sweeps()
+            wandb.Api().project(name=rnn_project_name, entity="dmckean130-university-of-colorado-boulder").sweeps()
         ):
             if sweep.name == paths["identifier"]:
                 if (
@@ -200,7 +200,7 @@ def main():
 
         def single_run_train_rnn():
             with wandb.init(
-                entity="lecs-general", project=rnn_project_name, dir=args.wandb_dir
+                entity="dmckean130-university-of-colorado-boulder", project=rnn_project_name, dir=args.wandb_dir
             ) as run:
                 run.config.update({"slurm_job_id": slurm_job_id})
                 logger.info(f"Training with params: {pformat(run.config)}")
@@ -248,18 +248,18 @@ def main():
             logger.info("Creating new sweep")
             sweep_id = wandb.sweep(
                 sweep=sweep_configuration,
-                entity="lecs-general",
+                entity="dmckean130-university-of-colorado-boulder",
                 project=rnn_project_name,
             )
             remaining_runs = num_neural_runs
         else:
             logger.info(f"Reusing sweep {existing_sweep.id}")
-            sweep_id = f"lecs-general/{rnn_project_name}/{existing_sweep.id}"
+            sweep_id = f"dmckean130-university-of-colorado-boulder/{rnn_project_name}/{existing_sweep.id}"
             remaining_runs = num_neural_runs - len(
                 [r for r in existing_sweep.runs if r.state == "finished"]
             )
         wandb.agent(sweep_id, function=single_run_train_rnn, count=remaining_runs)
-        sweep = wandb.Api().sweep(f"lecs-general/{rnn_project_name}/sweeps/{sweep_id}")
+        sweep = wandb.Api().sweep(f"dmckean130-university-of-colorado-boulder/{rnn_project_name}/sweeps/{sweep_id.split(chr(47))[-1]}")
         best_run = sweep.best_run()
 
         # Push model
@@ -335,7 +335,7 @@ def main():
 
     def _run_extraction():
         with wandb.init(
-            entity="lecs-general",
+            entity="dmckean130-university-of-colorado-boulder",
             project="fst-distillation.extraction.v2",
             config={
                 "rnn": {
@@ -385,7 +385,7 @@ def main():
     try:
         for sweep in (
             wandb.Api()
-            .project(name="fst-distillation.extraction.v2", entity="lecs-general")
+            .project(name="fst-distillation.extraction.v2", entity="dmckean130-university-of-colorado-boulder")
             .sweeps()
         ):
             if sweep.name == paths["identifier"]:
@@ -404,14 +404,14 @@ def main():
         logger.info("Creating new sweep")
         fst_sweep_id = wandb.sweep(
             sweep=sweep_configuration,
-            entity="lecs-general",
+            entity="dmckean130-university-of-colorado-boulder",
             project="fst-distillation.extraction.v2",
         )
         remaining_runs = num_extract_runs
     else:
         logger.info(f"Reusing sweep {existing_sweep.id}")
         fst_sweep_id = (
-            f"lecs-general/fst-distillation.extraction.v2/{existing_sweep.id}"
+            f"dmckean130-university-of-colorado-boulder/fst-distillation.extraction.v2/{existing_sweep.id}"
         )
         remaining_runs = num_extract_runs - len(
             [r for r in existing_sweep.runs if r.state == "finished"]
@@ -419,7 +419,7 @@ def main():
 
     wandb.agent(fst_sweep_id, function=_run_extraction, count=remaining_runs)
     sweep = wandb.Api().sweep(
-        f"lecs-general/fst-distillation.extraction.v2/sweeps/{fst_sweep_id}"
+        f"dmckean130-university-of-colorado-boulder/fst-distillation.extraction.v2/sweeps/{fst_sweep_id.split(chr(47))[-1]}"
     )
     best_run = sweep.best_run()
     print(f"Best run: {best_run.url}")

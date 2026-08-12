@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from src.modeling.tokenizer import Tokenizer
 
-device = "cuda" if torch.cuda.is_available() else "mps"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def predict(

@@ -14,7 +14,7 @@ from src.modeling.spectral_penalty import spectral_penalty
 from src.modeling.tokenizer import Tokenizer
 from src.training.shared import set_lr
 
-device = "cuda" if torch.cuda.is_available() else "mps"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 logger = logging.getLogger(__file__)
 
