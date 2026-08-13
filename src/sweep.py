@@ -356,8 +356,8 @@ def main():
                     "eval.loss": alignment_pred_loss,
                 },
                 "identifier": paths["identifier"],
-		"objective": args.objective,
-		"merge_outputs": paths["merge_outputs"],
+                "objective": args.objective,
+                "merge_outputs": paths["merge_outputs"],
             },
             dir=args.wandb_dir,
         ) as run:

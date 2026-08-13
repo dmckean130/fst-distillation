@@ -205,14 +205,23 @@ def extract_bimachine(
                 logger.info(f"Input:\t{''.join(input_string)}")
                 logger.info(f"Gold:\t{''.join(correct_output)}")
                 logger.info(f"Predicted:\t{output}")
-            logger.info(f"Not accepted reasons:\n{pprint.pformat(error_types)}")
-        return compute_metrics(labels, preds)
+        logger.info(f"Not accepted reasons:\n{pprint.pformat(error_types)}")
+        result = compute_metrics(labels, preds)
+        for error_name, count in error_types.items():
+            key = getattr(error_name, "value", error_name)
+            result[f"error_{key}"] = count
+        result["error_total"] = sum(error_types.values())
+        return result
 
     metrics = {
         "eval": evaluate(raw_eval_examples, log=True),
         "train": evaluate(raw_train_examples),
         "test": evaluate(raw_test_examples),
     }
+    metrics["num_forward_states"] = len(forward_fst.states)
+    metrics["num_backward_states"] = len(backward_fst.states)
+    metrics["output_table_size"] = len(final_outputs)
+    metrics["product_upper_bound"] = len(forward_fst.states) * len(backward_fst.states)
     logger.info(pprint.pformat(metrics))
     return metrics, bimachine
 
