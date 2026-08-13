@@ -323,8 +323,10 @@ def main():
         )
         max_clusters = len(np.unique(activations, axis=0))
 
+    extraction_sweep_name = f"{paths['identifier']}.{args.objective}.{paths['merge_outputs']}"
+
     sweep_configuration = {
-        "name": paths["identifier"],
+        "name": extraction_sweep_name,
         "method": "bayes",
         "metric": {"goal": "maximize", "name": "eval.f1"},
         "parameters": {
@@ -354,6 +356,8 @@ def main():
                     "eval.loss": alignment_pred_loss,
                 },
                 "identifier": paths["identifier"],
+		"objective": args.objective,
+		"merge_outputs": paths["merge_outputs"],
             },
             dir=args.wandb_dir,
         ) as run:
@@ -396,14 +400,14 @@ def main():
             .project(name="fst-distillation.extraction.v2", entity="dmckean130-university-of-colorado-boulder")
             .sweeps()
         ):
-            if sweep.name == paths["identifier"]:
+            if sweep.name == extraction_sweep_name:
                 if (
                     len([r for r in sweep.runs if r.state == "finished"])
                     < num_extract_runs
                 ):
                     existing_sweep = sweep
                     raise ValueError(
-                        f"Found sweep for {paths['identifier']}, but sweep is not finished or crashed! Resuming..."
+                        f"Found sweep for {extraction_sweep_name}, but sweep is not finished or crashed! Resuming..."
                     )
     except ValueError as e:
         logger.warning(e)
