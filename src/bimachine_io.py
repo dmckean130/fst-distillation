@@ -89,4 +89,15 @@ def load_tables(path: str | Path) -> BimachineTables:
         psi={(p, r, a): out for p, r, a, out in obj["psi"]},
     )
 
+if __name__ == "__main__":
+    import tempfile
 
+    from src.bimachine_to_fst import toy_R1
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        p = dump_tables(toy_R1(), Path(tmpdir) / "toy_R1.json")
+        print(p.read_text(encoding="utf-8"))
+        assert load_tables(p) == toy_R1(), "round trip changed the machine"
+        q = dump_tables(load_tables(p), Path(tmpdir) / "toy_R1_again.json")
+        assert p.read_bytes() == q.read_bytes(), "not byte-stable"
+    print("round trip OK")
