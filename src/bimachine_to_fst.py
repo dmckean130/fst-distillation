@@ -4,7 +4,7 @@ from collections import deque, defaultdict
 State = str
 
 @dataclass(frozen=True)
-class Bimachine:
+class BimachineTables:
     q_L0: State
     F_L: frozenset[State]
     delta_L: dict[tuple[State, str], State]
@@ -13,8 +13,8 @@ class Bimachine:
     delta_R: dict[tuple[State, str], State]
     psi: dict[tuple[State, State, str], str]
 
-def toy_R1() -> Bimachine:
-    return Bimachine(
+def toy_R1() -> BimachineTables:
+    return BimachineTables(
         q_L0="0",
         F_L=frozenset({"0", "1"}),
         delta_L={("0", "a"): "1",  
@@ -28,7 +28,7 @@ def toy_R1() -> Bimachine:
         psi={("0", "0", "a"): "x", ("0", "1", "a"): "y", ("1", "0", "b"): ""}
     )
 
-def _validate(bm: Bimachine) -> None:
+def _validate(bm: BimachineTables) -> None:
     Q_L = {bm.q_L0} | {p for (p, _) in bm.delta_L} | set(bm.delta_L.values())
     Q_R = {bm.q_R0} | {r for (r, _) in bm.delta_R} | set(bm.delta_R.values())
     Sigma = {a for (_, a) in bm.delta_L}
@@ -48,7 +48,7 @@ def build_reverse_index(delta_R):
         reverse_index[(r, a)].add(r_prime)
     return dict(reverse_index)
 
-def bimachine_to_fst(bm: Bimachine, max_states: int = 10**6):
+def bimachine_to_fst(bm: BimachineTables, max_states: int = 10**6):
     pre_R = build_reverse_index(bm.delta_R)
     Sigma = {a for (_, a) in bm.delta_L}
     start = {(bm.q_L0, r) for r in bm.F_R}   # (q_L0, r) for every r in F_R

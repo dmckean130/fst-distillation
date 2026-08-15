@@ -1,8 +1,10 @@
-"""Runs the full experiment for a given language"""
+from __future__ import annotations
 
+"""Runs the full experiment for a given language"""
 import ast
 import logging
 import os
+import tempfile
 from pathlib import Path
 from pprint import pformat
 
@@ -13,11 +15,47 @@ from src.data.aligned.example import load_examples_from_file
 from src.extract_bimachine import extract_bimachine
 from src.paths import create_arg_parser, create_paths_from_args
 from src.train_alignment_predictor import predict_full_domain, train_alignment_predictor
+from src.bimachine_io import dump_tables, fst_to_tables
+from src.bimachine_to_fst import BimachineTables
 
 from .extract_fst import ExtractionHyperparameters, extract_fst
 from .train_rnn import train_rnn
 
 logger = logging.getLogger(__name__)
+
+def _log_bimachine_artifact(run, bimachine, paths) -> None:
+    """Serialize an extracted Bimachine and log it as a W&B artifact.
+    """
+    try:
+        q_L0, F_L, delta_L = fst_to_tables(bimachine.forward_fst)
+        q_R0, F_R, delta_R = fst_to_tables(bimachine.backward_fst)
+        tables = BimachineTables(
+            q_L0=q_L0,
+            F_L=F_L,
+            delta_L=delta_L,
+            q_R0=q_R0,
+            F_R=F_R,
+            delta_R=delta_R,
+            psi=dict(bimachine.output_table),
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = dump_tables(tables, Path(tmpdir) / "bimachine.json")
+            artifact = wandb.Artifact(
+                name=f"bimachine-{run.id}",
+                type="bimachine",
+                metadata={
+                    "identifier": paths["identifier"],
+                    "num_forward_states": len(F_L | {q_L0}),
+                    "num_backward_states": len(F_R | {q_R0}),
+                    "psi_entries": len(tables.psi),
+                },
+            )
+            artifact.add_file(str(path))
+            run.log_artifact(artifact)
+            artifact.wait()  # block until upload finishes; tmpdir dies after this
+    except Exception as e:
+        logger.exception("Bimachine serialization failed")
+        run.summary["bimachine_serialization_error"] = f"{type(e).__name__}: {e}"
 
 
 def main():
@@ -375,13 +413,14 @@ def main():
                 full_domain_search_n=full_domain_search_n,
             )
             if args.objective == "bimachine":
-                results, _ = extract_bimachine(
+                results, bimachine = extract_bimachine(
                     hparams=hyperparams,
                     paths=paths,
                     precomputed_activations=(activations, transition_labels)
                     if full_domain_search_n == 3
                     else None,  # type:ignore
                 )
+                _log_bimachine_artifact(run,bimachine,paths)
             else:
                 results, _ = extract_fst(
                     hparams=hyperparams,
