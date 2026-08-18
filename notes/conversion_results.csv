@@ -1,0 +1,5 @@
+dataset,run_id,psi_entries,delta_L_keys,delta_R_keys,n_start,n_finals,build_status,build_seconds,n_arcs,states_reachable,states_trimmed,arcs_trimmed,trim_seconds,pyfoma_status,states_built,states_accessible,determinize,states_determinized,determinize_seconds,minimize,states_minimized,minimize_seconds
+g2p/geo,jtdov1jn,10664,1664,1963,13,8,not capped,0.04,10664,4103,4103,10664,0.01,built,4104,4104,completed,3515,0.23,completed,3329,0.1
+g2p/fre,6okg216x,14263,3164,3593,54,43,not capped,0.08,14263,9593,9593,14263,0.02,built,9594,9594,completed,5854,0.14,completed,4349,0.13
+g2p/dut,yj614phc,28257,12851,13020,456,414,not capped,0.23,28243,25382,25382,28243,0.1,built,25383,25383,completed,15060,0.22,completed,7582,0.36
+histnorm/deu,x57e3mo2,60973,26407,27006,5614,6476,not capped,0.75,60973,65443,65443,60973,0.19,built,65444,65444,completed,28560,1.04,completed,7236,1.69
