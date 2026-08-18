@@ -12,3 +12,10 @@ src/crpalign/libalign.so
 *.key
 tmp
 *.tex
+artifacts/
+wandb/
+logs/
+slurm-*.out
+*.bak
+slurm-*.out
+*.bak
