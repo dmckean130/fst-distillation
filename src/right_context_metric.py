@@ -58,6 +58,8 @@ def compute_rcd(psi):
         "num_pa_pairs": len(all_pairs),
         "num_supported": len(supported),
         "frac_singly_observed": sum(s == 1 for s in supports) / len(supports),
+        "mean_support": mean(supports),
+        "median_support": median(supports),
         "max_support": max(supports),
         "rcd_raw": rcd_raw,
         "rcd_supported": rcd_supported,
