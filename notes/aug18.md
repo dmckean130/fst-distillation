@@ -7,3 +7,7 @@ Epsilon transitions block serialization on 3 datasets. Not fixed by `epsilon_rem
 bgpu-g6-u25 is unusable, sm 120 “no kernel image is available for execution".
 
 Weighting by transition frequency will give a more accurate RCD number - helps fix hapax row firing especially in sparse data sets. 
+
+pyfoma determinize() does not test sequentiality. "determinization completed" on all four datasets is NOT evidence of bounded delay / the twinning property. Fix: determinize the input projection (all labels as one-tuples).
+
+

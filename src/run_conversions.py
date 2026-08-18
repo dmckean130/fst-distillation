@@ -23,7 +23,7 @@ USER = "dmckean130-university-of-colorado-boulder"
 PROJECT = "fst-distillation.extraction.v2"
 
 MAX_STATES = 10**6
-MAX_PYFORMA = 200_000
+MAX_PYFOMA = 200_000
 
 # hardcoding runs 
 RUNS = [
@@ -162,7 +162,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default="notes/conversion_results.csv")
     parser.add_argument("--only", help="run a single dataset, e.g. g2p/geo")
-    parser.add_argument("--max-pyfoma", type=int, default=MAX_PYFORMA)
+    parser.add_argument("--max-pyfoma", type=int, default=MAX_PYFOMA)
     args = parser.parse_args()
  
     todo = [(d, r) for d, r in RUNS if args.only is None or d == args.only]
