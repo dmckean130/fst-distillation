@@ -53,6 +53,9 @@ def product_to_pyfoma(arcs, finals, start):
     fst.states = set(states.values()) | {root}
     fst.initialstate = root
     fst.finalstates = final_states
+    alphabet = {sym for src, a, out, dest in arcs for sym in (a, out)}
+    alphabet.discard("")
+    fst.alphabet = alphabet
     return fst
  
  
