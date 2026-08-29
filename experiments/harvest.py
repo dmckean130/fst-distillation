@@ -112,11 +112,15 @@ def harvest_arm(dataset, objective, merge, sweep, runs):
         ("num_backward_states", "num_backward_states"),
         ("output_table_size", "output_table_size"),
         ("product_upper_bound", "product_upper_bound"),
+        ("eval.error_total", "error_total"),
+        ("test.error_total", "test_error_total"),
     ]:
         row[col] = get_metric(s, key)
 
     # Error breakdown -- name uncertain, so try several and record what hit.
     for kind in ("forward", "backward", "output"):
+        row[f"error_{kind}"] = get_metric(s, f"eval.error_{kind}")
+        row[f"test_error_{kind}"] = get_metric(s, f"test.error_{kind}")
         val = None
         for candidate in (f"eval.error_{kind}", f"error_{kind}",
                           f"eval.errors.{kind}", f"eval.error_types.{kind}"):
@@ -202,6 +206,11 @@ def build_wide(rows, rcd, conv):
             "error_forward": bi.get("error_forward"),
             "error_backward": bi.get("error_backward"),
             "error_output": bi.get("error_output"),
+            "error_total": bi.get("error_total"),
+            "test_error_total": bi.get("test_error_total"),
+            "test_error_forward": bi.get("test_error_forward"),
+            "test_error_backward": bi.get("test_error_backward"),
+            "test_error_output": bi.get("test_error_output"),
         })
     return wide
 
