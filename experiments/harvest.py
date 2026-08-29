@@ -34,12 +34,28 @@ DATASETS = {
 
 def get_metric(summary, key):
     """Read a metric that W&B may store flat ('test.f1') or nested."""
-    if key in summary:
+    try:
+        if key in summary:
+            return summary[key]
+    except (TypeError, KeyError):
+        pass
+    head, _, tail = key.partition(".")
+    if not tail:
+        return None
+    sub = summary.get(head)
+    if sub is None:
+        return None
+    try:
+        return sub[tail]
+    except (TypeError, KeyError):
+        return None
+    
+    '''if key in summary:
         return summary[key]
     head, _, tail = key.partition(".")
     if tail and isinstance(summary.get(head), dict):
         return summary[head].get(tail)
-    return None
+    return None'''
 
 
 def parse_sweep_name(name):
