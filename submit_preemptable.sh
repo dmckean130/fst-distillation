@@ -13,4 +13,5 @@ sbatch \
   --partition=blanca \
   --gres=gpu:1 \
   --time=1-00:00:00 \
+  --exclude=bgpu-g6-u25 \
   sweep_job.sh  --models /scratch/alpine/$USER/fst-distillation/models/ "$@"
