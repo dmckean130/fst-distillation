@@ -19,3 +19,5 @@ slurm-*.out
 *.bak
 slurm-*.out
 *.bak
+*.pyc
+__pycache__/
