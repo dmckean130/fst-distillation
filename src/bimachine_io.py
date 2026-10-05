@@ -1,10 +1,36 @@
 from __future__ import annotations
 import json
+import os
+import time
 from pathlib import Path
 
 from src.bimachine_to_fst import BimachineTables
 
 FORMAT_VERSION = 1
+
+def _dump_for_debug(fst, where):
+    """TEMPORARY: write the failing FSA to JSON before the epsilon guard raises.
+        this is for checking epsilon loops in the bimachine. """
+    try:
+        out_dir = Path(f"/scratch/alpine/{os.environ.get('USER', 'unknown')}/eps_dumps")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        data = {
+            "first_eps_state": where,
+            "initial": fst.initialstate.name,
+            "finals": [s.name for s in fst.finalstates],
+            "states": {
+                s.name: [
+                    [list(label), t.targetstate.name]
+                    for label, ts in s.transitions.items()
+                    for t in ts
+                ]
+                for s in fst.states
+            },
+        }
+        path = out_dir / f"fsa_{int(time.time() * 1000)}_{os.getpid()}.json"
+        path.write_text(json.dumps(data))
+    except Exception as e:  
+        print(f"[eps dump failed: {e}]")
 
 def fst_to_tables(fst) -> tuple[str, frozenset[str], dict[tuple[str, str], str]]:
     """deterministic, epsilon-free pyfoma FSA -> (initial, finals, delta).
@@ -23,6 +49,7 @@ def fst_to_tables(fst) -> tuple[str, frozenset[str], dict[tuple[str, str], str]]
         for label, transitions in state.transitions.items():
             sym = label[0]
             if sym == "":
+                _dump_for_debug(fst, state.name)
                 raise ValueError(
                     f"epsilon transition out of state {state.name!r}; "
                     "delta cannot represent epsilons"
