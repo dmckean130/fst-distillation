@@ -57,6 +57,34 @@ def _log_bimachine_artifact(run, bimachine, paths) -> None:
         logger.exception("Bimachine serialization failed")
         run.summary["bimachine_serialization_error"] = f"{type(e).__name__}: {e}"
 
+def _best_finished_run(sweep):
+    """Like sweep.best_run(), but skips runs that crashed, got preempted,
+    or never logged a validation loss. Falls back to the old behaviour
+    only if no run qualifies."""
+    best, best_loss = None, None
+    for r in sweep.runs:
+        if r.state != "finished":
+            continue
+        sm = r.summary_metrics
+        if isinstance(sm, str):
+            sm = ast.literal_eval(sm)
+        try:
+            loss = sm["validation"]["loss"]
+        except (KeyError, TypeError):
+            continue
+        if loss is None or loss != loss:  # missing or NaN
+            continue
+        if best_loss is None or loss < best_loss:
+            best, best_loss = r, loss
+    if best is None:
+        logger.warning(
+            f"No finished run with validation loss in sweep {sweep.id}; "
+            "falling back to sweep.best_run()"
+        )
+        return sweep.best_run()
+    logger.info(f"Best finished run: {best.name} (validation loss {best_loss:.4f})")
+    return best
+
 
 def main():
     parser = create_arg_parser()
@@ -134,8 +162,8 @@ def main():
                         f"Found existing alignment predictor sweep {paths['identifier']}"
                     )
                     # If we didn't use identical paths, do a new run
-                    if sweep.best_run().config["paths"] == paths_strs:  # type:ignore
-                        best_run = sweep.best_run()
+                    if _best_finished_run(sweep).config["paths"] == paths_strs:  # type:ignore
+                        best_run = _best_finished_run(sweep)
                         break
 
         if best_run is None:
@@ -196,7 +224,7 @@ def main():
             sweep = wandb.Api().sweep(
                 f"dmckean130-university-of-colorado-boulder/fst-distillation.alignment_prediction.v2/sweeps/{sweep_id}"
             )
-            best_run = sweep.best_run()
+            best_run = _best_finished_run(sweep)
             predict_full_domain(paths, best_run.name, best_run.config["batch_size"])
 
         assert best_run is not None
@@ -228,11 +256,11 @@ def main():
                     raise ValueError(
                         f"Found sweep for {paths['identifier']}, but sweep is not finished or crashed! Resuming..."
                     )
-                if sweep.best_run().config["paths"] == paths_strs:  # type:ignore
+                if _best_finished_run(sweep).config["paths"] == paths_strs:  # type:ignore
                     logger.info(
                         f"Found existing finished sweep {paths['identifier']}, reusing best run instead of running."
                     )
-                    best_run = sweep.best_run()
+                    best_run = _best_finished_run(sweep)
                     break
     except ValueError as e:
         logger.warning(e)
@@ -306,7 +334,7 @@ def main():
             remaining_runs = max(0, remaining_runs)
         wandb.agent(sweep_id, function=single_run_train_rnn, count=remaining_runs)
         sweep = wandb.Api().sweep(f"dmckean130-university-of-colorado-boulder/{rnn_project_name}/sweeps/{sweep_id.split(chr(47))[-1]}")
-        best_run = sweep.best_run()
+        best_run = _best_finished_run(sweep)
 
         # Push model
         with wandb.init(id=best_run.id, resume="must"):
