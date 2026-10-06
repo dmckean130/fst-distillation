@@ -57,6 +57,15 @@ def _log_bimachine_artifact(run, bimachine, paths) -> None:
         logger.exception("Bimachine serialization failed")
         run.summary["bimachine_serialization_error"] = f"{type(e).__name__}: {e}"
 
+def _val_loss(summary):
+    """Read validation loss whether W&B returns it flat ('validation.loss')
+    or nested ({'validation': {'loss': ...}})."""
+    if isinstance(summary, str):
+        summary = ast.literal_eval(summary)
+    if "validation.loss" in summary:
+        return summary["validation.loss"]
+    return summary["validation"]["loss"]
+
 def _best_finished_run(sweep):
     """Like sweep.best_run(), but skips runs that crashed, got preempted,
     or never logged a validation loss. Falls back to the old behaviour
@@ -65,11 +74,10 @@ def _best_finished_run(sweep):
     for r in sweep.runs:
         if r.state != "finished":
             continue
-        sm = r.summary_metrics
-        if isinstance(sm, str):
-            sm = ast.literal_eval(sm)
         try:
-            loss = sm["validation"]["loss"]
+            loss = _val_loss(r.summary_metrics)
+        except (KeyError, TypeError):
+            continue
         except (KeyError, TypeError):
             continue
         if loss is None or loss != loss:  # missing or NaN
@@ -228,12 +236,7 @@ def main():
             predict_full_domain(paths, best_run.name, best_run.config["batch_size"])
 
         assert best_run is not None
-        if isinstance(best_run.summary_metrics, str):
-            alignment_pred_loss = ast.literal_eval(best_run.summary_metrics)[
-                "validation"
-            ]["loss"]
-        else:
-            alignment_pred_loss = best_run.summary_metrics["validation"]["loss"]
+        alignment_pred_loss = _val_loss(best_run.summary_metrics)
 
     # =========================================
     # 3. RNN TRAINING
@@ -343,10 +346,7 @@ def main():
                 name="checkpoint",
                 type="model",
             )
-    if isinstance(best_run.summary_metrics, str):
-        best_run_loss = ast.literal_eval(best_run.summary_metrics)["validation"]["loss"]
-    else:
-        best_run_loss = best_run.summary_metrics["validation"]["loss"]
+    best_run_loss = _val_loss(best_run.summary_metrics)
     assert best_run is not None
 
     # =========================================
