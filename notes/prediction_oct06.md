@@ -32,7 +32,7 @@ Singly-observed % will be down a few points on deu and swe. This follows from a 
 
 Acceptance will be up a little on deu and swe because fewer rare labels means fewer missing ψ entries. But deu's problem is forward-state sparsity. 
 
-Since the input side is unchanged; only output labels differ, \|Q_L\ will be about the same. 
+Since the input side is unchanged; only output labels differ, |Q_L| will be about the same. 
 
 Merging left means an inserted output is emitted at the earlier input symbol, before the next one is read. That output now depends on the right context. `right` merging delays it, which is the sequential-friendly choice. The bimachine absorbs this through its backward automaton, so F1 shouldn't suffer, but RCD should increase. 
 
@@ -55,7 +55,7 @@ Singly-observed % goes down along the same axis, deu much more than geo. Same me
 
 F1 on deu goes up but much less than acceptance. Geo stays the same. F1 is capped by the RNN. Newly accepted strings are only correct where the RNN was right, and pseudo-labels teach ψ the RNN's errors 
 
- \|Q_L\ goes up modestly with augmentation. More observed transitions means more nondeterminism inside clusters for state splitting to resolve
+ |Q_L| goes up modestly with augmentation. More observed transitions means more nondeterminism inside clusters for state splitting to resolve
 
  Cluster cap (small → current): Smaller cap: acceptance up, F1 down. Deu has a small cap that loses little F1; geo doesn't. Fewer states means each row sees more evidence, at the cost of merging states that should differ 
 
