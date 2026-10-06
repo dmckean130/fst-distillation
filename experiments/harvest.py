@@ -31,6 +31,33 @@ DATASETS = {
     "kon": ("inflection", "C", 0.846),
 }
 
+ALL_RUNS = []   # every run in every sweep: raw material for choosing a floor later
+
+def _m(summary, key):
+    """'eval.f1' stored flat or nested."""
+    if key in summary.keys():
+        return summary[key]
+    group, name = key.split(".", 1)
+    sub = summary.get(group)
+    return sub.get(name) if hasattr(sub, "get") else None
+
+def best_by_conditional(sweep):
+    best, best_cond = None, -1.0
+    for run in sweep.runs:
+        if run.state != "finished":
+            continue
+        f1 = _m(run.summary, "eval.f1")
+        acc = _m(run.summary, "eval.accepted_percentage")
+        cond = f1 / acc if (f1 is not None and acc) else None
+        ALL_RUNS.append({
+            "sweep": sweep.name, "run": run.name, "run_id": run.id,
+            "eval_f1": f1, "eval_accepted": acc, "eval_conditional": cond,
+            "test_f1": _m(run.summary, "test.f1"),
+            "test_accepted": _m(run.summary, "test.accepted_percentage"),
+        })
+        if cond is not None and cond > best_cond:
+            best, best_cond = run, cond
+    return best, best_cond
 
 def get_metric(summary, key):
     """Read a metric that W&B may store flat ('test.f1') or nested."""
@@ -101,6 +128,7 @@ def harvest_arm(dataset, objective, merge, sweep, runs):
     """Build one long-form row for a (dataset, objective) arm."""
     best = sweep.best_run()
     s = best.summary
+    cond_run, cond_score = best_by_conditional(sweep)
     task, comparison_set, published = DATASETS[dataset]
 
     row = {
@@ -115,6 +143,9 @@ def harvest_arm(dataset, objective, merge, sweep, runs):
         "best_run": best.name,
         "best_run_id": best.id,
         "published_fst_f1": published,
+        "best_run_by_conditional": cond_run.name if cond_run else None,
+        "best_run_by_conditional_id": cond_run.id if cond_run else None,
+        "conditional_pick_differs": (cond_run is not None and cond_run.id != best.id),
     }
 
     for key, col in [
@@ -268,7 +299,6 @@ def write_latex(wide, path):
     with open(path, "w") as f:
         f.write("\n".join(lines) + "\n")
 
-
 def write_csv(rows, path):
     if not rows:
         return
@@ -323,7 +353,14 @@ def main():
               f"{fmt(r['fst_f1']):>8s}{fmt(r['delta_vs_published']):>8s}"
               f"{fmt(r['rcd_supported']):>7s}{fmt_int(r['product_trimmed']):>9s}"
               f"{fmt_int(r['product_minimized']):>8s}")
-
+        
+    if ALL_RUNS:
+        import csv
+        with open("notes/selection_all_runs.csv", "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(ALL_RUNS[0]))
+            w.writeheader()
+            w.writerows(ALL_RUNS)
+        print(f"[saved {len(ALL_RUNS)} runs to notes/selection_all_runs.csv]")
 
 if __name__ == "__main__":
     main()
