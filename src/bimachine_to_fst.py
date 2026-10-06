@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from collections import deque, defaultdict
+from dataclasses import replace
 
 State = str
 
@@ -12,6 +13,39 @@ class BimachineTables:
     F_R: frozenset[State]
     delta_R: dict[tuple[State, str], State]
     psi: dict[tuple[State, State, str], str]
+
+def expand_defaults(bm: "Bimachine") -> tuple["Bimachine", dict]:
+    """Make generate()'s "" fallback explicit.
+
+    In Bimachine.generate a "" arc is taken when a state has no transition on the current symbol, 
+    and it consumes that symbol. Psi works the same way.
+    """
+    sigma = ({a for (_, a) in bm.delta_L} | {a for (_, a) in bm.delta_R}
+             | {a for (_, _, a) in bm.psi})
+    sigma.discard("")
+
+    def expand(delta):
+        out = {k: v for k, v in delta.items() if k[1] != ""}
+        for (q, a), t in delta.items():
+            if a == "":
+                for b in sigma:
+                    out.setdefault((q, b), t)
+        return out
+
+    psi = {k: v for k, v in bm.psi.items() if k[2] != ""}
+    for (p, r, a), y in bm.psi.items():
+        if a == "":
+            for b in sigma:
+                psi.setdefault((p, r, b), y)
+
+    new = replace(bm, delta_L=expand(bm.delta_L), delta_R=expand(bm.delta_R), psi=psi)
+    stats = {
+        "default_arcs_L": sum(a == "" for (_, a) in bm.delta_L),
+        "default_arcs_R": sum(a == "" for (_, a) in bm.delta_R),
+        "default_psi": sum(a == "" for (_, _, a) in bm.psi),
+        "psi_added": len(psi) - (len(bm.psi) - sum(a == "" for (_, _, a) in bm.psi)),
+    }
+    return new, stats
 
 def toy_R1() -> BimachineTables:
     return BimachineTables(
@@ -49,11 +83,7 @@ def build_reverse_index(delta_R):
     return dict(reverse_index)
 
 def bimachine_to_fst(bm: BimachineTables, max_states: int = 10**6):
-    if any(a == "" for (_, a) in bm.delta_L) or any(a == "" for (_, a) in bm.delta_R):
-        raise NotImplementedError(
-            "bimachine has input-epsilon transitions; "
-            "conversion does not handle them yet"
-        )
+    bm, default_stats = expand_defaults(bm)
     pre_R = build_reverse_index(bm.delta_R)
     Sigma = {a for (_, a) in bm.delta_L}
     start = {(bm.q_L0, r) for r in bm.F_R}   # (q_L0, r) for every r in F_R
@@ -80,10 +110,10 @@ def bimachine_to_fst(bm: BimachineTables, max_states: int = 10**6):
                 arcs.append(((p,r), a, out, dest))
                 if dest not in seen:
                     if len(seen) >= max_states:
-                        return(arcs, finals, start, "capped")
+                        return(arcs, finals, start, "capped", default_stats)
                     seen.add(dest)
                     queue.append(dest)
-    return arcs, finals, start, "not capped"
+    return arcs, finals, start, "not capped", default_stats
 
 #bm = toy_R1()
 #_validate(bm)

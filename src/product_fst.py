@@ -126,7 +126,7 @@ def main():
     from src.bimachine_to_fst import bimachine_to_fst, toy_R1
  
     print("=== toy R1 = {<a,x>, <ab,y>} ===")
-    arcs, finals, start, status = bimachine_to_fst(toy_R1())
+    arcs, finals, start, status, _ = bimachine_to_fst(toy_R1())
     print(f"  construction status: {status}")
     print(f"  arcs={len(arcs)}  finals={len(finals)}  start={len(start)}")
     print()

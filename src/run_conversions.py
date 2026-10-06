@@ -40,7 +40,8 @@ COLUMNS = [
     "states_trimmed", "arcs_trimmed", "trim_seconds",
     "pyfoma_status", "states_built", "states_accessible",
     "determinize", "states_determinized", "determinize_seconds",
-    "minimize", "states_minimized", "minimize_seconds",
+    "minimize", "states_minimized", "minimize_seconds", "default_arcs_L", "default_arcs_R", 
+    "default_psi", "psi_added",
 ]
 
 def trim(arcs, finals, start):
@@ -79,7 +80,8 @@ def run_one(dataset, run_id, max_pyfoma):
           f"delta_R={row['delta_R_keys']}  |F_R|={row['n_start']}")
  
     t0 = time.time()
-    arcs, finals, start, status = bimachine_to_fst(tables, max_states=MAX_STATES)
+    arcs, finals, start, status, default_stats = bimachine_to_fst(tables, max_states=MAX_STATES)
+    row.update(default_stats)
     row["build_seconds"] = round(time.time() - t0, 2)
     row["build_status"] = status
     row["n_arcs"] = len(arcs)
