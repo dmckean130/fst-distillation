@@ -27,7 +27,7 @@ def _dump_for_debug(fst, where):
                 for s in fst.states
             },
         }
-        path = out_dir / f"fsa_{int(time.time() * 1000)}_{os.getpid()}.json"
+        path = out_dir / f"fsa_{os.environ.get('SLURM_JOB_ID', 'nojob')}_{int(time.time() * 1000)}.json"
         path.write_text(json.dumps(data))
     except Exception as e:  
         print(f"[eps dump failed: {e}]")
