@@ -8,7 +8,7 @@ from src.bimachine_to_fst import BimachineTables
 
 FORMAT_VERSION = 1
 
-def _dump_for_debug(fst, where):
+'''def _dump_for_debug(fst, where):
     """TEMPORARY: write the failing FSA to JSON before the epsilon guard raises.
         this is for checking epsilon loops in the bimachine. """
     try:
@@ -30,10 +30,10 @@ def _dump_for_debug(fst, where):
         path = out_dir / f"fsa_{os.environ.get('SLURM_JOB_ID', 'nojob')}_{int(time.time() * 1000)}.json"
         path.write_text(json.dumps(data))
     except Exception as e:  
-        print(f"[eps dump failed: {e}]")
+        print(f"[eps dump failed: {e}]")'''
 
 def fst_to_tables(fst) -> tuple[str, frozenset[str], dict[tuple[str, str], str]]:
-    """deterministic, epsilon-free pyfoma FSA -> (initial, finals, delta).
+    """deterministic, pyfoma FSA -> (initial, finals, delta).
     """
     if fst.initialstate.name is None:
         raise ValueError("FSA has an unnamed initial state")
@@ -48,12 +48,12 @@ def fst_to_tables(fst) -> tuple[str, frozenset[str], dict[tuple[str, str], str]]
             raise ValueError("FSA has an unnamed state")
         for label, transitions in state.transitions.items():
             sym = label[0]
-            if sym == "":
+            '''if sym == "":
                 _dump_for_debug(fst, state.name)
                 raise ValueError(
                     f"epsilon transition out of state {state.name!r}; "
                     "delta cannot represent epsilons"
-                )
+                )'''
             if len(transitions) > 1:
                 raise ValueError(
                     f"nondeterministic: state {state.name!r} has "

@@ -49,6 +49,11 @@ def build_reverse_index(delta_R):
     return dict(reverse_index)
 
 def bimachine_to_fst(bm: BimachineTables, max_states: int = 10**6):
+    if any(a == "" for (_, a) in bm.delta_L) or any(a == "" for (_, a) in bm.delta_R):
+        raise NotImplementedError(
+            "bimachine has input-epsilon transitions; "
+            "conversion does not handle them yet"
+        )
     pre_R = build_reverse_index(bm.delta_R)
     Sigma = {a for (_, a) in bm.delta_L}
     start = {(bm.q_L0, r) for r in bm.F_R}   # (q_L0, r) for every r in F_R
