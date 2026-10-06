@@ -31,6 +31,9 @@ RUNS = [
     ("g2p/fre", "6okg216x"),
     ("g2p/dut", "yj614phc"),
     ("histnorm/deu", "x57e3mo2"),
+    ("histnorm/swe", "asew5y0m"),
+    ("histnorm/spa", "1wofy6ko"),
+    ("histnorm/isl", "612l6w9n")
 ]
 
 COLUMNS = [
