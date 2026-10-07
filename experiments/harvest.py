@@ -13,6 +13,7 @@ import wandb
 
 ENTITY = "dmckean130-university-of-colorado-boulder"
 PROJECT = "fst-distillation.extraction.v2"
+MERGE_FILTER = "right"   # set to "bpe" for the Day 5 set B harvest
 
 # Which task each dataset belongs to, and which comparison set.
 #   A = matched-budget paired comparison (bimachine AND transduction, 12/25)
@@ -108,6 +109,8 @@ def newest_sweep_per_arm(project):
         if parsed is None:
             continue
         dataset, objective, merge = parsed
+        if merge != MERGE_FILTER:
+            continue
         runs = [r for r in sweep.runs if r.state == "finished"]
         if not runs:
             continue
