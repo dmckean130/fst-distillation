@@ -19,3 +19,21 @@ swe
 
 
 Conditional-accuracy selection: ties on isl/swe; degenerate on geo/dut/fre. Real trade-off only on spa (acc 0.85/cond 0.69 vs acc 0.67/cond 0.81). Needs a minimum-acceptance floor before it's usable. 
+
+on rcd with new data: 
+
+- Predicted rank vs rcd_supported: ρ = 0.57, p = 0.18 (was 0.80 at n = 4).
+  Endpoints hold (fre highest, geo lowest). spa is the main miss: predicted
+  6th, measured 2nd. swe predicted 4th, measured 6th.
+- rcd_supported vs delta_vs_published: ρ = 0.50, p = 0.25. Still confounded
+  by acceptance (dut bimachine F1 0.002) 
+- Sparsity check: spa, geo, fre have mean support 4.5-7.1; deu, dut, isl,
+  swe ~2.1-2.3. spa's high RCD may partly reflect better observation.
+  geo (high support, low RCD) argues against sparsity explaining everything.
+
+on deu vs swe (independent test): 
+- Predicted similar RCD. Measured deu 0.285, swe 0.118. Similar support
+  (2.31 vs 2.06), so not a sparsity artifact. Prediction not supported
+  (ordering was marked preliminary). I guess I don't know as much about Germanic spelling reforms as I though. 
+
+Coverage is 7 of 9 datasets (czn/kon still missing).
